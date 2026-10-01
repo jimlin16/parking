@@ -367,13 +367,22 @@ class YouParkingClient:
         :param recaptcha_token: Google reCAPTCHA v3 產生的 Token。若為 None，將自動於背景啟動無頭 Chrome 獲取。
         """
         try:
-            if not recaptcha_token:
-                recaptcha_token = self.fetch_recaptcha_token()
             start = datetime.strptime(start_date, "%Y-%m-%d")
             end = datetime.strptime(end_date, "%Y-%m-%d")
             reserved_days = (end - start).days + 1
             if order_amount is None:
                 order_amount = self._calculate_order_amount(start_date, end_date)
+            # 僅在預約資料準備完成後取得 Token；取得失敗最多重試一次。
+            if not recaptcha_token:
+                for attempt in range(2):
+                    try:
+                        recaptcha_token = self.fetch_recaptcha_token()
+                        if not isinstance(recaptcha_token, str) or not recaptcha_token.strip():
+                            raise RuntimeError("未取得有效的 reCAPTCHA Token")
+                        break
+                    except Exception:
+                        if attempt == 1:
+                            raise
         except Exception as exc:
             raise OrderPreparationError(str(exc)) from exc
 

@@ -7,11 +7,6 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-set "BUNDLED_PYTHON=%USERPROFILE%\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
-if exist "%BUNDLED_PYTHON%" (
-  "%BUNDLED_PYTHON%" dashboard.py --open
-  goto :done
-)
 where py >nul 2>nul
 if not errorlevel 1 (
   py -3 dashboard.py --open
