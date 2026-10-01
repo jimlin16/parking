@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142e35">
+  <title>停車預約控制台</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="側邊導覽">
+      <div class="brand"><span class="brand-mark">P</span><span>PARKING</span></div>
+      <div class="nav-kicker">預約管理</div>
+      <nav class="side-nav" aria-label="頁面區塊">
+        <a class="active" href="#overview"><span class="nav-icon">▦</span>總覽</a>
+        <a href="#scan-settings"><span class="nav-icon">◷</span>掃描設定</a>
+        <a href="#reservation"><span class="nav-icon">▤</span>預約資料</a>
+        <a href="#activity"><span class="nav-icon">☷</span>操作紀錄</a>
+      </nav>
+      <div class="sidebar-foot"><span class="side-avatar">P4</span><span><strong>桃園機場 P4</strong><small>本機操作介面</small></span></div>
+    </aside>
+
+    <main class="main" id="overview">
+      <header class="page-header">
+        <div><h1>停車預約控制台</h1><p>監控指定日期的車位，管理預約資料與操作紀錄。</p></div>
+        <time id="clock" aria-label="目前時間"></time>
+      </header>
+
+      <div class="content-grid">
+        <div class="primary-column">
+          <section class="summary-grid" aria-label="監控狀態">
+            <div class="summary-card status-card">
+              <span class="status-orb" id="status-orb"></span>
+              <div class="summary-text"><span class="eyebrow">掃描狀態</span><strong id="monitor-status">載入中</strong></div>
+              <span class="status-pill" id="status-pill">連線中</span>
+            </div>
+            <div class="summary-card next-card"><span class="eyebrow">下次掃描</span><strong id="next-scan">—</strong><small id="countdown">尚未啟動</small></div>
+          </section>
+
+          <section class="card scan-card" id="scan-settings">
+            <div class="section-head"><div><h2>掃描設定</h2><p>設定檢查間隔；監控啟動後會依此掃描指定日期。</p></div></div>
+            <form id="interval-form" class="interval-form">
+              <label for="interval">每隔</label>
+              <div class="number-control"><input id="interval" name="interval" type="number" inputmode="numeric" min="1" max="3600" step="1" required><span>秒</span></div>
+              <span class="interval-copy">掃描一次</span>
+              <button class="button button-primary save-interval" type="submit">儲存掃描設定</button>
+            </form>
+            <div class="scan-actions">
+              <p id="interval-applied">設定載入中…</p>
+              <div class="scan-action-buttons">
+                <button id="scan-now" class="button button-ghost" type="button">立即掃描</button>
+                <button id="monitor-toggle" class="button button-outline" type="button">啟動監控</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="card reservation-card" id="reservation">
+            <div class="section-head"><div><h2>預約資料</h2><p>選擇入場與離場日期，填寫聯絡資訊與車牌。</p></div><span class="section-tag">可隨時修改</span></div>
+            <form id="reservation-form">
+              <div class="form-grid">
+                <label class="field field-lot">停車場<select id="parking-lot" name="parking_lot" required><option value="">載入中…</option></select></label>
+                <label class="field">入場日期<input id="start-date" name="start_date" type="date" required></label>
+                <label class="field">離場日期<input id="end-date" name="end_date" type="date" required></label>
+                <label class="field">姓名<input id="contact-name" name="contact_name" type="text" maxlength="60" autocomplete="name" required></label>
+                <label class="field">聯絡電話 <span class="optional">選填</span><input id="phone" name="phone" type="tel" maxlength="30" autocomplete="tel" placeholder="例如 0912-345-678"></label>
+                <label class="field field-plate">車牌號碼<input id="car-no" name="car_no" type="text" maxlength="20" autocomplete="off" spellcheck="false" required></label>
+              </div>
+              <label class="autobook-row" for="auto-book"><span><strong>入場日有空位時自動預約</strong><small>只會嘗試送單一次；若平台要求 v2 驗證，請改用手動「立即預約」。</small></span><span class="switch"><input id="auto-book" name="auto_book" type="checkbox"><span class="switch-track"></span></span></label>
+              <div class="reservation-actions"><p>修改後請先儲存；若平台要求免費驗證，會開啟官方頁面讓你完成。</p><div><button class="button button-outline" type="submit">儲存修改</button><button id="clear-booking-state" class="button button-ghost" type="button">清除預約狀態</button><button id="book-now" class="button button-primary" type="button">立即預約</button></div></div>
+            </form>
+          </section>
+
+          <section class="card availability-card" aria-labelledby="availability-title">
+            <div class="section-head compact"><div><h2 id="availability-title">最近掃描結果</h2><p id="last-scan-time">尚未掃描</p></div><span id="availability-status" class="result-tag neutral">等待查詢</span></div>
+            <div id="availability-list" class="availability-list"><p class="empty-copy">啟動監控或點選「立即掃描」，即可查看每日剩餘車位。</p></div>
+          </section>
+        </div>
+
+        <aside class="activity-card card" id="activity" aria-label="通知與執行紀錄">
+          <div class="activity-head"><div><h2>操作通知</h2><p>最近的成功、失敗與錯誤訊息</p></div><span id="notice-count" class="notice-count">0</span></div>
+          <div id="notifications" class="notifications"><p class="empty-copy">尚無操作通知。</p></div>
+          <div class="log-head"><h2>執行紀錄</h2><span id="log-total"></span></div>
+          <div class="log-filters" role="group" aria-label="紀錄篩選"><button type="button" class="selected" data-filter="all" aria-pressed="true">全部</button><button type="button" data-filter="success" aria-pressed="false">成功</button><button type="button" data-filter="failure" aria-pressed="false">失敗</button><button type="button" data-filter="error" aria-pressed="false">錯誤</button></div>
+          <ol id="log-list" class="log-list"><li class="empty-copy">尚無執行紀錄。</li></ol>
+        </aside>
+      </div>
+      <footer class="footer">桃園機場 P4 · 本機控制台 <a href="https://pcc.youparking.com.tw/parkingreserve/" target="_blank" rel="noopener noreferrer">開啟官方預約頁面</a></footer>
+    </main>
+  </div>
+
+  <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="false"></div>
+  <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title"><form method="dialog"><span class="confirm-icon">!</span><h2 id="confirm-title">確認操作</h2><p id="confirm-message"></p><div class="dialog-actions"><button class="button button-outline" value="cancel">取消</button><button class="button button-primary" id="confirm-submit" value="confirm">確認送出</button></div></form></dialog>
+</body>
+</html>

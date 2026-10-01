@@ -1,0 +1,19 @@
+# Python bytecode and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local runtime data and browser login profiles
+/logs/
+/.booking-state/
+/browser_profile/
+/youparking_chrome_profile/
+/youparking_chrome_profile.lock
+
+# Regenerable graft cards and caches
+/graft/
+
+# Google Drive upload temporary files
+.tmp.driveupload/
+*.tmp.driveupload

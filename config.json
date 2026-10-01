@@ -1,0 +1,15 @@
+{
+  "parking_lot": "peace",
+  "space_id": "9",
+  "site_code": 15272193788,
+  "car_no": "ABC-6666",
+  "contact_name": "林",
+  "phone": "",
+  "inv_type": "紙本",
+  "vehicle_code": "",
+  "buyer_num": "",
+  "check_interval_seconds": 6,
+  "start_date": "2026-10-21",
+  "end_date": "2026-10-24",
+  "auto_book": true
+}
