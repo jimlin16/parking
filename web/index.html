@@ -60,6 +60,11 @@
             </div>
           </section>
 
+          <section class="card availability-card" aria-labelledby="availability-title">
+            <div class="section-head compact"><div><h2 id="availability-title">最近掃描結果</h2><p id="last-scan-time">尚未掃描</p></div><span id="availability-status" class="result-tag neutral">等待查詢</span></div>
+            <div id="availability-list" class="availability-list"><p class="empty-copy">啟動監控或點選「立即掃描」，即可查看每日剩餘車位。</p></div>
+          </section>
+
           <section class="card reservation-card" id="reservation">
             <div class="section-head"><div><h2>預約資料</h2><p>選擇入場與離場日期，填寫聯絡資訊與車牌。</p></div><span class="section-tag">可隨時修改</span></div>
             <form id="reservation-form">
@@ -74,11 +79,6 @@
               <label class="autobook-row" for="auto-book"><span><strong>入場日有空位時自動預約</strong><small>只會嘗試送單一次；若平台要求 v2 驗證，請改用手動「立即預約」。</small></span><span class="switch"><input id="auto-book" name="auto_book" type="checkbox"><span class="switch-track"></span></span></label>
               <div class="reservation-actions"><p>修改後請先儲存；若平台要求免費驗證，會開啟官方頁面讓你完成。</p><div><button class="button button-outline" type="submit">儲存修改</button><button id="clear-booking-state" class="button button-ghost" type="button">清除預約狀態</button><button id="book-now" class="button button-primary" type="button">立即預約</button></div></div>
             </form>
-          </section>
-
-          <section class="card availability-card" aria-labelledby="availability-title">
-            <div class="section-head compact"><div><h2 id="availability-title">最近掃描結果</h2><p id="last-scan-time">尚未掃描</p></div><span id="availability-status" class="result-tag neutral">等待查詢</span></div>
-            <div id="availability-list" class="availability-list"><p class="empty-copy">啟動監控或點選「立即掃描」，即可查看每日剩餘車位。</p></div>
           </section>
         </div>
 

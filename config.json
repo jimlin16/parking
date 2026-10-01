@@ -9,7 +9,7 @@
   "vehicle_code": "",
   "buyer_num": "",
   "check_interval_seconds": 6,
-  "start_date": "2026-10-21",
+  "start_date": "2026-10-22",
   "end_date": "2026-10-24",
   "auto_book": true
 }
