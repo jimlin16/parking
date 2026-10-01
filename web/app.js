@@ -60,6 +60,10 @@ function applyState(next, announce = false) {
 function render() {
   if (!state.data) return;
   const { config, monitor, events } = state.data;
+  const google = state.data.google_login || { status: 'unknown' };
+  $('google-login-status').textContent = google.login_open ? '登入視窗已開啟，完成後請關閉視窗' : ({ checking: '檢查中…', signed_in: '已登入', signed_out: '需重新登入', unknown: '無法確認' }[google.status] || '無法確認');
+  $('google-login-time').textContent = google.checked_at ? `檢查時間 ${localTime(google.checked_at, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}` : '尚未完成檢查';
+  $('google-login').disabled = state.busy || state.connectionLost || google.login_open || google.status === 'checking' || monitor.phase === 'booking';
   const running = monitor.running && !monitor.stopping;
   const statusText = state.connectionLost ? '連線中斷' : monitor.stopping ? '停止中' : monitor.phase === 'booking' ? '送出預約中' : monitor.phase === 'scanning' ? '掃描中' : running ? '監控中' : '已停止';
   $('monitor-status').textContent = statusText;
@@ -316,6 +320,7 @@ document.querySelectorAll('.side-nav a').forEach(link => link.addEventListener('
 }));
 
 updateClock();
+$('google-login').addEventListener('click', () => post('/api/google/login'));
 post('/api/session/reset').then(result => {
   if (!result.ok) refresh();
 });

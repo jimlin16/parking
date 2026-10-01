@@ -5,6 +5,8 @@ import argparse
 import json
 import os
 import re
+import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -147,6 +149,8 @@ class Dashboard:
         self.last_result = None
         self.events = deque(maxlen=200)
         self.event_id = 0
+        self.google_login = {"status": "checking", "checked_at": None, "login_open": False}
+        self.google_login_process = None
         self.config = self._read_config()
         self._clear_runtime_results()
 
@@ -156,6 +160,33 @@ class Dashboard:
         if not isinstance(config, dict):
             raise ValueError("config.json 必須是 JSON 物件。")
         return config
+
+    def check_google_login(self):
+        from google_login_status import check_google_login
+        try:
+            status = check_google_login()
+        except Exception:
+            status = "unknown"
+        with self.lock:
+            self.google_login.update(status=status, checked_at=datetime.now().astimezone().isoformat())
+
+    def open_google_login(self):
+        with self.lock:
+            if self.google_login["login_open"] or self.google_login["status"] == "checking":
+                raise InputError("登入視窗已開啟或正在檢查，請稍候。")
+            if self.phase == "booking":
+                raise InputError("正在預約，請稍後再登入。")
+            self.google_login_process = subprocess.Popen(
+                [sys.executable, str(ROOT / "login_google.py")], cwd=str(ROOT),
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+            self.google_login["login_open"] = True
+        def wait_for_login():
+            self.google_login_process.wait()
+            with self.lock:
+                self.google_login.update(login_open=False, status="checking")
+            self.check_google_login()
+        threading.Thread(target=wait_for_login, daemon=True).start()
+        return self.emit("Google 登入", "info", "已開啟登入視窗，完成後請關閉視窗。")
 
     def _public_config(self):
         config = self.config
@@ -247,6 +278,7 @@ class Dashboard:
             running = self.thread is not None and self.thread.is_alive()
             return {
                 "config": self._public_config(),
+                "google_login": dict(self.google_login),
                 "parking_lots": [
                     {"key": key, "label": lot["label"]}
                     for key, lot in PARKING_LOTS.items()
@@ -503,6 +535,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 event = dashboard.book_now()
             elif route == "/api/booking/reset":
                 event = dashboard.clear_booking_state()
+            elif route == "/api/google/login":
+                event = dashboard.open_google_login()
             else:
                 return self._json(404, {"ok": False, "error": "找不到操作。"})
             status = 409 if event["status"] in ("failure", "error") else 200
@@ -521,6 +555,7 @@ def main():
     args = parser.parse_args()
     server = ThreadingHTTPServer(("127.0.0.1", args.port), DashboardHandler)
     server.dashboard = Dashboard()
+    threading.Thread(target=server.dashboard.check_google_login, daemon=True).start()
     print(f"控制台已啟動：http://127.0.0.1:{server.server_port}")
     print("按 Ctrl+C 關閉。")
     if args.open:
