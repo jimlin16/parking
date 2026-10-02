@@ -149,7 +149,7 @@ class Dashboard:
         self.last_result = None
         self.events = deque(maxlen=200)
         self.event_id = 0
-        self.google_login = {"status": "checking", "checked_at": None, "login_open": False}
+        self.google_login = {"status": "checking", "checked_at": None, "login_open": False, "login_ready": False}
         self.google_login_process = None
         self.config = self._read_config()
         self._clear_runtime_results()
@@ -177,16 +177,33 @@ class Dashboard:
             if self.phase == "booking":
                 raise InputError("正在預約，請稍後再登入。")
             self.google_login_process = subprocess.Popen(
-                [sys.executable, str(ROOT / "login_google.py")], cwd=str(ROOT),
+                [sys.executable, "-u", str(ROOT / "login_google.py")], cwd=str(ROOT),
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                text=True, encoding="utf-8", errors="replace",
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
-            self.google_login["login_open"] = True
+            process = self.google_login_process
+            self.google_login.update(login_open=True, login_ready=False)
+            event = self.emit("Google 登入", "info", "正在開啟登入視窗…")
         def wait_for_login():
-            self.google_login_process.wait()
+            last_line = ""
+            for line in process.stdout:
+                if line.strip() == "GOOGLE_LOGIN_READY":
+                    with self.lock:
+                        self.google_login["login_ready"] = True
+                    self.emit("Google 登入", "info", "已開啟登入視窗，完成後請關閉視窗。")
+                elif line.strip():
+                    last_line = line.strip()
+            code = process.wait()
+            process.stdout.close()
             with self.lock:
-                self.google_login.update(login_open=False, status="checking")
+                self.google_login.update(login_open=False, login_ready=False, status="checking")
+            if code != 0:
+                reason = ("缺少 Playwright，請執行 py -3 -m pip install -r requirements.txt。"
+                          if "No module named 'playwright'" in last_line else last_line[:180])
+                self.emit("Google 登入", "error", f"登入視窗開啟失敗：{reason or '登入工具異常結束。'}")
             self.check_google_login()
         threading.Thread(target=wait_for_login, daemon=True).start()
-        return self.emit("Google 登入", "info", "已開啟登入視窗，完成後請關閉視窗。")
+        return event
 
     def _public_config(self):
         config = self.config

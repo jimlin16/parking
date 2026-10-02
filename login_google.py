@@ -45,6 +45,7 @@ def main():
             ],
             locale="zh-TW"
         )
+        print("GOOGLE_LOGIN_READY", flush=True)
         context.add_init_script("""
             Object.defineProperty(navigator, 'webdriver', {
                 get: () => undefined

@@ -1,10 +1,12 @@
 import json
+import io
 import subprocess
 import sys
 import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import MagicMock, patch
 from datetime import date, timedelta
 from http.server import ThreadingHTTPServer
 from pathlib import Path
@@ -57,6 +59,41 @@ class FakeClient:
 
 
 class DashboardTests(unittest.TestCase):
+    def test_google_login_child_failure_is_reported(self):
+        self.dashboard.google_login["status"] = "unknown"
+        process = MagicMock()
+        process.stdout = io.StringIO("ModuleNotFoundError: No module named 'playwright'\n")
+        process.wait.return_value = 1
+        with patch('dashboard.subprocess.Popen', return_value=process), \
+                patch.object(self.dashboard, 'check_google_login') as check:
+            self.dashboard.open_google_login()
+            for _ in range(100):
+                if check.called:
+                    break
+                time.sleep(0.01)
+            self.assertTrue(check.called)
+        self.assertFalse(self.dashboard.google_login['login_open'])
+        self.assertTrue(any(event['status'] == 'error' and '缺少 Playwright' in event['message']
+                            for event in self.dashboard.events))
+        self.assertFalse(any('已開啟登入視窗' in event['message'] for event in self.dashboard.events))
+
+    def test_google_login_ready_is_reported_only_after_child_signal(self):
+        self.dashboard.google_login["status"] = "unknown"
+        process = MagicMock()
+        process.stdout = io.StringIO("GOOGLE_LOGIN_READY\n")
+        process.wait.return_value = 0
+        with patch('dashboard.subprocess.Popen', return_value=process), \
+                patch.object(self.dashboard, 'check_google_login') as check:
+            event = self.dashboard.open_google_login()
+            for _ in range(100):
+                if check.called:
+                    break
+                time.sleep(0.01)
+            self.assertTrue(check.called)
+        self.assertIn('正在開啟', event['message'])
+        self.assertTrue(any('已開啟登入視窗' in event['message'] for event in self.dashboard.events))
+        self.assertFalse(self.dashboard.google_login['login_open'])
+
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         root = Path(self.directory.name)

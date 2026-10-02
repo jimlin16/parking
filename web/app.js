@@ -61,7 +61,7 @@ function render() {
   if (!state.data) return;
   const { config, monitor, events } = state.data;
   const google = state.data.google_login || { status: 'unknown' };
-  $('google-login-status').textContent = google.login_open ? '登入視窗已開啟，完成後請關閉視窗' : ({ checking: '檢查中…', signed_in: '已登入', signed_out: '需重新登入', unknown: '無法確認' }[google.status] || '無法確認');
+  $('google-login-status').textContent = google.login_open ? (google.login_ready ? '登入視窗已開啟，完成後請關閉視窗' : '正在開啟登入視窗…') : ({ checking: '檢查中…', signed_in: '已登入', signed_out: '需重新登入', unknown: '無法確認' }[google.status] || '無法確認');
   $('google-login-time').textContent = google.checked_at ? `檢查時間 ${localTime(google.checked_at, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}` : '尚未完成檢查';
   $('google-login').disabled = state.busy || state.connectionLost || google.login_open || google.status === 'checking' || monitor.phase === 'booking';
   const running = monitor.running && !monitor.stopping;
